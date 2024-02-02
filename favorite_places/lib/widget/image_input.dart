@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'dart:io'; //for File()
 
 class ImageInput extends StatefulWidget {
-  const ImageInput({super.key});
+  const ImageInput({super.key, required this.onPickImage});
+
+  final void Function(File image) onPickImage;
 
   @override
   State<StatefulWidget> createState() {
@@ -16,29 +18,37 @@ class _ImageInputState extends State<ImageInput> {
   void _takePicture() async {
     final imagePicker = ImagePicker();
     final pickedImage = await imagePicker.pickImage(
-        source: ImageSource.camera,
-        maxWidth: 600,
-        maxHeight: 600,
-        preferredCameraDevice: CameraDevice.front);
+      source: ImageSource.camera,
+      maxWidth: double.infinity,
+      maxHeight: double.infinity,
+      preferredCameraDevice: CameraDevice.front,
+      // requestFullMetadata: true,
+    );
     if (pickedImage == null) {
       return;
     }
     setState(() {
       _selectedImage = File(pickedImage.path);
     });
+    widget.onPickImage(_selectedImage!);
   }
 
   @override
   Widget build(BuildContext context) {
     Widget content = TextButton.icon(
-      onPressed: () {},
+      onPressed: _takePicture,
       label: const Text('Take Picture'),
-      icon: Icon(Icons.camera),
+      icon: const Icon(Icons.camera),
     );
     if (_selectedImage != null) {
-      content = Image.file(
-        _selectedImage!,
-        fit: BoxFit.cover,
+      content = GestureDetector(
+        onTap: _takePicture,
+        child: Image.file(
+          _selectedImage!,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+        ),
       );
     }
 
@@ -52,11 +62,7 @@ class _ImageInputState extends State<ImageInput> {
       height: 250,
       width: double.infinity,
       alignment: Alignment.center,
-      child: TextButton.icon(
-        onPressed: _takePicture,
-        icon: Icon(Icons.camera),
-        label: Text('Capture'),
-      ),
+      child: content,
     );
   }
 }
